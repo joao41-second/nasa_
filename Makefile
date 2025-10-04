@@ -1,34 +1,45 @@
+
 NAME = map_obj_viw
 
 CC = g++
-FLAG = `pkg-config --cflags --libs opencv4`
-SRC = ./srcs/main.cpp
+SRC = ./srcs/main.cpp ./srcs/img_matrix.cpp
+OBJS = $(SRC:.cpp=.o)
 
-SRCS = $(SRC:.cpp=.o)
+# Flags de compilação
+CXXFLAGS = -std=c++17 -fPIC -I/usr/include/opencv4 `pkg-config --cflags Qt5Widgets`
 
-%.o:%.cpp
-	$(CC) $(FLAG) -c $< -o $@
+# Flags de link
+LDFLAGS = `pkg-config --libs opencv4 Qt5Widgets`
 
+# Compilar objetos
+%.o: %.cpp
+	$(CC) $(CXXFLAGS) -c $< -o $@
 
+# Target principal
 all: $(NAME)
 
-	g++ -o $(NAME) $(SRCS) `pkg-config --cflags --libs opencv4`
+# Linkar objetos
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME) $(LDFLAGS)
 
-$(NAME): $(SRCS)
+# Limpar objetos
+clean:
+	rm -f $(OBJS)
 
-docker:
-	 xhost +local:docker
-	 docker-compose up --build
+# Limpar objetos + executável
+fclean: clean
+	rm -f $(NAME)
 
-re:fclean
+# Recompilar tudo
+re: fclean
 	make all
 
-clean:
-	rm -fr $(SRCS)
-
-fclean:clean
-	rm -fr $(SRCS) $(NAME)
-
-s:re
+# Rodar executável
+s: re
 	./$(NAME)
-	
+
+# Docker (mantido)
+docker:
+	xhost +local:docker
+	docker-compose up --build
+
