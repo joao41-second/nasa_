@@ -1,0 +1,3 @@
+
+-I/usr/include/opencv4
+-std=c++17
