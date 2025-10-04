@@ -15,9 +15,26 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstring>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QString>
+#include <QLabel>
+#include <QApplication>
+#include <QComboBox>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <iostream>
+#include <vector>
+#include <string>
 
 using namespace cv;
 using namespace std;
 
 
 cv::Mat get_img(std::string caminhoPasta, int crop = 20);
+
+
+void abrirFormulario(QWidget* parent = nullptr) ;

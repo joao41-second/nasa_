@@ -2,7 +2,7 @@
 NAME = map_obj_viw
 
 CC = g++
-SRC = ./srcs/main.cpp ./srcs/img_matrix.cpp
+SRC = ./srcs/main.cpp ./srcs/img_matrix.cpp ./srcs/but.cpp
 OBJS = $(SRC:.cpp=.o)
 
 # Flags de compilação

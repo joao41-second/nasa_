@@ -1,110 +1,85 @@
-#include <algorithm>
+
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <iostream>
-#include <string>
-#include <iostream>
-#include <filesystem>
-#include <vector>
-#include <ostream>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <string>
 #include <dirent.h>
-#include <sys/stat.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
 #include <cstring>
 
 using namespace cv;
 using namespace std;
 
+// Lista e ordena os ficheiros dentro da pasta
 std::vector<std::string> listarArquivos(const std::string& caminhoPasta) {
     std::vector<std::string> arquivos;
-    
     DIR *dir = opendir(caminhoPasta.c_str());
-    if (dir == nullptr) {
-        std::cout << "Erro: Não foi possível abrir a pasta '" << caminhoPasta << "'" << std::endl;
-        std::cout << "Verifique se o caminho está correto e se você tem permissão de leitura." << std::endl;
+    if (!dir) {
+        cerr << "Erro: não foi possível abrir a pasta '" << caminhoPasta << "'" << endl;
         return arquivos;
     }
-    
-    struct dirent *entrada;
-    std::cout << "Listando arquivos da pasta: " << caminhoPasta << std::endl;
-    std::cout << "----------------------------------------" << std::endl;
-    
-    while ((entrada = readdir(dir)) != NULL) {
-        // Ignora os diretórios especiais . e ..
-        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0) {
-            continue;
-        }
-        
-        std::string nomeArquivo = entrada->d_name;
-        std::string caminhoCompleto = caminhoPasta + "/" + nomeArquivo;
-	std::cout <<  caminhoCompleto << std::endl;
-        
 
-           arquivos.push_back(caminhoCompleto);
-        
+    struct dirent *entrada;
+    while ((entrada = readdir(dir)) != nullptr) {
+        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0)
+            continue;
+        arquivos.push_back(caminhoPasta + "/" + entrada->d_name);
     }
-    
     closedir(dir);
+
+    // Ordena alfabeticamente (img_1.png, img_2.png, …)
+    std::sort(arquivos.begin(), arquivos.end());
     return arquivos;
 }
 
+// Junta as imagens numa grelha 3x3 (centro = img_5)
+cv::Mat get_img(const std::string caminhoPasta, int crop = 0) {
+    vector<string> arquivos = listarArquivos(caminhoPasta);
+    vector<cv::Mat> imgs;
 
-cv::Mat get_img(std::string caminhoPasta, int crop = 20)
-{
-    std::vector<std::string> arquivos = listarArquivos(caminhoPasta);
-    std::vector<cv::Mat> imgs;
-
-    // Carregar imagens
     for (auto &path : arquivos) {
-        cv::Mat temp = cv::imread(path, cv::IMREAD_COLOR);
-        if (!temp.empty()) imgs.push_back(temp);
+        Mat temp = imread(path, IMREAD_COLOR);
+        if (!temp.empty())
+            imgs.push_back(temp);
     }
-
     if (imgs.empty()) {
-        std::cerr << "Nenhuma imagem carregada!" << std::endl;
-        return cv::Mat();
+        cerr << "Nenhuma imagem carregada!" << endl;
+        return Mat();
     }
 
-    // Recorta bordas pretas (crop)
+    // Recorta bordas pretas
     for (auto &im : imgs) {
         if (crop > 0 && im.cols > 2 * crop && im.rows > 2 * crop) {
-            cv::Rect roi(crop, crop, im.cols - 2 * crop, im.rows - 2 * crop);
+            Rect roi(crop, crop, im.cols - 2 * crop, im.rows - 2 * crop);
             im = im(roi).clone();
         }
     }
 
-    // Redimensiona todas pro mesmo tamanho
+    // Redimensiona todas para o mesmo tamanho
     int w = imgs[0].cols;
     int h = imgs[0].rows;
     for (auto &im : imgs)
-        cv::resize(im, im, cv::Size(w, h));
+        resize(im, im, Size(w, h));
 
-    int cols = 3;
-    int rows = 3;
+    const int rows = 3, cols = 3;
+    Mat combined(h * rows, w * cols, imgs[0].type(), Scalar::all(0));
 
-    // Cria imagem final
-    cv::Mat combined(h * rows, w * cols, imgs[0].type(), cv::Scalar::all(0));
+    // Mapa de índices correto (0-based)
+    int index_map[3][3] = {
+        {8, 7, 6},
+        {5, 4, 3},
+        {2, 1, 0}
+    };
 
-    // Copia cada imagem pro lugar certo
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            int idx = i * cols + j;
-            if (idx >= imgs.size()) break;
-
-            cv::Rect roi(j * w, i * h, w, h);
+    // Copia cada imagem para a posição correspondente
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            int idx = index_map[i][j];
+            if (idx >= static_cast<int>(imgs.size())) continue;
+            Rect roi(j * w, i * h, w, h);
             imgs[idx].copyTo(combined(roi));
         }
     }
 
     return combined;
 }
-
-
-
-
-
 

@@ -100,9 +100,13 @@ int main(int argc, char** argv) {
     layout->addWidget(label_imagem);
 
     // Botão
-    QPushButton* button = new QPushButton("Clique Aqui");
-    layout->addWidget(button);
-    QObject::connect(button, &QPushButton::clicked, botaoCallback);
+
+ QPushButton* openFormButton = new QPushButton("Abrir Formulário");
+    layout->addWidget(openFormButton);
+
+    QObject::connect(openFormButton, &QPushButton::clicked, [&]() {
+        abrirFormulario(&window);
+    });
 
     // Slider de zoom
     QSlider* slider = new QSlider(Qt::Horizontal);
