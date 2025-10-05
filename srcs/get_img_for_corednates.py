@@ -158,7 +158,6 @@ if __name__ == "__main__":
         survey='2MASS-K',
         raio=1.0,
         pixels=1500,
-        nome_arquivo='imagem_tempo_atual.png'
     )
     
     # Exemplo 3: Várias posições em loop

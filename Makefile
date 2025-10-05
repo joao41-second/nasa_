@@ -6,7 +6,7 @@ SRC = ./srcs/main.cpp ./srcs/img_matrix.cpp ./srcs/but.cpp
 OBJS = $(SRC:.cpp=.o)
 
 # Flags de compilação
-CXXFLAGS = -std=c++17 -fPIC -I/usr/include/opencv4 `pkg-config --cflags Qt5Widgets`
+CXXFLAGS =  -fPIC -I/usr/include/opencv4 `pkg-config --cflags Qt5Widgets`
 
 # Flags de link
 LDFLAGS = `pkg-config --libs opencv4 Qt5Widgets`

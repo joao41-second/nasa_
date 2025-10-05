@@ -1,4 +1,3 @@
--std=c++17
 -fPIC
 -I/usr/include/opencv4
 -I/usr/include/x86_64-linux-gnu/qt5

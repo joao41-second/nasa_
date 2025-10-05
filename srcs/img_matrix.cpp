@@ -32,7 +32,7 @@ std::vector<std::string> listarArquivos(const std::string& caminhoPasta) {
 }
 
 // Junta as imagens numa grelha 3x3 (centro = img_5)
-cv::Mat get_img(const std::string caminhoPasta, int crop = 0) {
+cv::Mat get_img(const std::string caminhoPasta, int crop = -30) {
     vector<string> arquivos = listarArquivos(caminhoPasta);
     vector<cv::Mat> imgs;
 
@@ -79,6 +79,8 @@ cv::Mat get_img(const std::string caminhoPasta, int crop = 0) {
             imgs[idx].copyTo(combined(roi));
         }
     }
+
+    arquivos.clear();
 
     return combined;
 }
