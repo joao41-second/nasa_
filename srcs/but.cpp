@@ -10,8 +10,12 @@
 #include <QProcess>
 #include <QStringList>
 #include <iostream>
-
 using namespace std;
+
+
+cv::Mat get_img(std::string caminhoPasta, int crop = 20);
+
+Mat imagem_original;
 
 void abrirFormulario(QWidget* parent = nullptr) {
     QWidget* formWindow = new QWidget(parent, Qt::FramelessWindowHint);
@@ -76,7 +80,13 @@ void abrirFormulario(QWidget* parent = nullptr) {
              << "--data_hora" << dataHora;
 
         // Executa script Python em background
+	int pid  = fork();
+	if(pid == 0)
+	{
         QProcess::startDetached("python3", QStringList() << "./srcs/get_img_text.py" << args);
+	exit();
+	}
+	waitpid(pid,0);
 
         formWindow->close();
     });
@@ -86,5 +96,6 @@ void abrirFormulario(QWidget* parent = nullptr) {
     formWindow->setLayout(mainLayout);
 
     formWindow->show();
+    imagem_original = get_img("./img"); // sua função de carregamento
 }
 

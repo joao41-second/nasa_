@@ -1,4 +1,5 @@
 
+#include <cstddef>
 #include <opencv2/opencv.hpp>
 #include <QApplication>
 #include <QPushButton>
@@ -11,7 +12,20 @@
 #include <QWheelEvent>
 #include <iostream>
 #include "but.hpp" // sua função abrirFormulario e get_img
+#include <iostream>
 
+#include <QApplication>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QDoubleSpinBox>
+#include <QSpinBox>
+#include <QProcess>
+#include <QStringList>
+#include <iostream>
+#include <sys/wait.h>
 using namespace cv;
 using namespace std;
 
@@ -25,6 +39,101 @@ const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
 // ================= FUNÇÃO PARA ATUALIZAR A IMAGEM =====================
+void abrirFormulario(QWidget* parent = nullptr) {
+    QWidget* formWindow = new QWidget(parent, Qt::FramelessWindowHint);
+    formWindow->setAttribute(Qt::WA_TranslucentBackground);
+    formWindow->setWindowTitle("new map");
+    formWindow->setFixedSize(400, 400);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout();
+
+    QWidget* container = new QWidget();
+    container->setStyleSheet("background-color: rgba(230, 30, 30, 230); border-radius: 10px;");
+    QVBoxLayout* containerLayout = new QVBoxLayout();
+
+    QFormLayout* formLayout = new QFormLayout();
+
+    QDoubleSpinBox* raBox = new QDoubleSpinBox();
+    raBox->setRange(0.0, 360.0);
+    raBox->setDecimals(6);
+    raBox->setValue(10.6847);
+    formLayout->addRow("RA (graus):", raBox);
+
+    QDoubleSpinBox* decBox = new QDoubleSpinBox();
+    decBox->setRange(-90.0, 90.0);
+    decBox->setDecimals(6);
+    decBox->setValue(41.2689);
+    formLayout->addRow("DEC (graus):", decBox);
+
+    QLineEdit* dateTimeEdit = new QLineEdit("2025-10-04 11:31:02");
+    formLayout->addRow("Data/Hora:", dateTimeEdit);
+
+    QDoubleSpinBox* raioBox = new QDoubleSpinBox();
+    raioBox->setRange(0.0, 10.0);
+    raioBox->setDecimals(4);
+    raioBox->setValue(0.02);
+    formLayout->addRow("Raio:", raioBox);
+
+    QSpinBox* pixelsBox = new QSpinBox();
+    pixelsBox->setRange(1, 10000);
+    pixelsBox->setValue(2000);
+    formLayout->addRow("Pixels:", pixelsBox);
+
+    containerLayout->addLayout(formLayout);
+
+    QPushButton* btnOk = new QPushButton("Confirmar");
+    containerLayout->addWidget(btnOk);
+
+    QObject::connect(btnOk, &QPushButton::clicked, [=]() {
+        // Captura valores do formulário
+        double ra = raBox->value();
+        double dec = decBox->value();
+        QString dataHora = dateTimeEdit->text();
+        double raio = raioBox->value();
+        int pixels = pixelsBox->value();
+
+        // Monta argumentos do script Python
+        QStringList args;
+        args << "./srcs/get_img_text.py"
+             << "--ra" << QString::number(ra)
+             << "--dec" << QString::number(dec)
+             << "--raio" << QString::number(raio)
+             << "--pixels" << QString::number(pixels)
+             << "--data_hora" << dataHora;
+
+        // ✅ Executa o script Python e espera terminar
+        QProcess process;
+        process.start("python3", args);
+
+        formWindow->close();
+        bool started = process.waitForStarted(3000); // espera até iniciar (3s máx)
+        if (!started) {
+            return;
+        }
+
+        process.waitForFinished(-1); // espera terminar sem limite de tempo
+
+        // Lê saída do Python
+        QByteArray output = process.readAllStandardOutput();
+        QByteArray error = process.readAllStandardError();
+
+        if (process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0) {
+        } else {
+        }
+
+        // ✅ Atualiza imagem apenas DEPOIS que o Python terminar
+        imagem_original = get_img("./img");
+
+        // Fecha o formulário
+    });
+
+    container->setLayout(containerLayout);
+    mainLayout->addWidget(container);
+    formWindow->setLayout(mainLayout);
+
+    formWindow->show();
+}
+
 void atualizarImagem() {
     if (imagem_original.empty()) return;
 
@@ -50,7 +159,6 @@ void atualizarImagem() {
     QImage qimg(imagem_rgb.data, imagem_rgb.cols, imagem_rgb.rows, static_cast<int>(imagem_rgb.step), QImage::Format_RGB888);
     label_imagem->setPixmap(QPixmap::fromImage(qimg));
 
-    imagem_original = get_img("./img"); // sua função de carregamento
 }
 
 // ================= FUNÇÃO PARA LIMITAR O CENTRO DO ZOOM =====================

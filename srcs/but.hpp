@@ -37,4 +37,5 @@ using namespace std;
 cv::Mat get_img(std::string caminhoPasta, int crop = 20);
 
 
-void abrirFormulario(QWidget* parent = nullptr) ;
+
+//void abrirFormulario(QWidget* parent = nullptr) ;
