@@ -1,7 +1,7 @@
 
 # 🌌 NASA Space Explorer
 
-![NASA Space Explorer](./data/vid.webm)  
+![NASA Space Explorer](./data/data_vid.gif)  
 *Explore the universe through an interactive, gamified experience.*
 
 ## Overview
