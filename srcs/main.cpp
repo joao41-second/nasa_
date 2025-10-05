@@ -39,6 +39,7 @@ const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
 // ================= FUNÇÃO PARA ATUALIZAR A IMAGEM =====================
+
 void abrirFormulario(QWidget* parent = nullptr) {
     QWidget* formWindow = new QWidget(parent, Qt::FramelessWindowHint);
     formWindow->setAttribute(Qt::WA_TranslucentBackground);
@@ -85,14 +86,14 @@ void abrirFormulario(QWidget* parent = nullptr) {
     containerLayout->addWidget(btnOk);
 
     QObject::connect(btnOk, &QPushButton::clicked, [=]() {
-        // Captura valores do formulário
+        // Captura os valores
         double ra = raBox->value();
         double dec = decBox->value();
         QString dataHora = dateTimeEdit->text();
         double raio = raioBox->value();
         int pixels = pixelsBox->value();
 
-        // Monta argumentos do script Python
+        // Monta os argumentos do Python
         QStringList args;
         args << "./srcs/get_img_text.py"
              << "--ra" << QString::number(ra)
@@ -101,30 +102,28 @@ void abrirFormulario(QWidget* parent = nullptr) {
              << "--pixels" << QString::number(pixels)
              << "--data_hora" << dataHora;
 
-        // ✅ Executa o script Python e espera terminar
-        QProcess process;
-        process.start("python3", args);
+        // Cria o processo
+        QProcess* process = new QProcess(parent);
 
+        // Quando o script terminar:
+        QObject::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                         [=](int exitCode, QProcess::ExitStatus status) {
+            QByteArray output = process->readAllStandardOutput();
+            QByteArray error = process->readAllStandardError();
+
+            if (status == QProcess::NormalExit && exitCode == 0) {
+                imagem_original = get_img("./img"); // Atualiza imagem
+            } else {
+            }
+
+            process->deleteLater();
+        });
+
+        // Inicia o script Python (em background)
+        process->start("python3", args);
+
+        // Fecha o formulário imediatamente
         formWindow->close();
-        bool started = process.waitForStarted(3000); // espera até iniciar (3s máx)
-        if (!started) {
-            return;
-        }
-
-        process.waitForFinished(-1); // espera terminar sem limite de tempo
-
-        // Lê saída do Python
-        QByteArray output = process.readAllStandardOutput();
-        QByteArray error = process.readAllStandardError();
-
-        if (process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0) {
-        } else {
-        }
-
-        // ✅ Atualiza imagem apenas DEPOIS que o Python terminar
-        imagem_original = get_img("./img");
-
-        // Fecha o formulário
     });
 
     container->setLayout(containerLayout);
@@ -133,6 +132,7 @@ void abrirFormulario(QWidget* parent = nullptr) {
 
     formWindow->show();
 }
+
 
 void atualizarImagem() {
     if (imagem_original.empty()) return;
